@@ -1,36 +1,88 @@
-"""Verify certificates using native system trust stores"""
+# SPDX-FileCopyrightText: 2016-2026 PyThaiNLP Project
+# SPDX-FileType: SOURCE
+# SPDX-License-Identifier: Apache-2.0
+__version__ = "5.3.7"
 
-import sys as _sys
+thai_consonants: str = (
+    "กขฃคฅฆงจฉชซฌญฎฏฐฑฒณดตถทธนบปผฝพฟภมยรลวศษสหฬอฮ"  # 44 chars
+)
 
-if _sys.version_info < (3, 10):
-    raise ImportError("truststore requires Python 3.10 or later")
+thai_vowels: str = (
+    "\u0e24\u0e26\u0e30\u0e31\u0e32\u0e33\u0e34\u0e35\u0e36\u0e37"
+    + "\u0e38\u0e39\u0e40\u0e41\u0e42\u0e43\u0e44\u0e45\u0e4d\u0e47"
+)  # 20
+thai_lead_vowels: str = "\u0e40\u0e41\u0e42\u0e43\u0e44"  # 5
+thai_follow_vowels: str = "\u0e30\u0e32\u0e33\u0e45"  # 4
+thai_above_vowels: str = "\u0e31\u0e34\u0e35\u0e36\u0e37\u0e4d\u0e47"  # 7
+thai_below_vowels: str = "\u0e38\u0e39"  # 2
 
-# Detect Python runtimes which don't implement SSLObject.get_unverified_chain() API
-# This API only became public in Python 3.13 but was available in CPython and PyPy since 3.10.
-if _sys.version_info < (3, 13):
-    try:
-        import ssl as _ssl
-    except ImportError:
-        raise ImportError("truststore requires the 'ssl' module")
-    else:
-        _sslmem = _ssl.MemoryBIO()
-        _sslobj = _ssl.create_default_context().wrap_bio(
-            _sslmem,
-            _sslmem,
-        )
-        try:
-            while not hasattr(_sslobj, "get_unverified_chain"):
-                _sslobj = _sslobj._sslobj  # type: ignore[attr-defined]
-        except AttributeError:
-            raise ImportError(
-                "truststore requires peer certificate chain APIs to be available"
-            ) from None
+thai_tonemarks: str = "\u0e48\u0e49\u0e4a\u0e4b"  # 4
 
-        del _ssl, _sslobj, _sslmem  # noqa: F821
+# Paiyannoi, Maiyamok, Phinthu, Thanthakhat, Nikhahit, Yamakkan:
+# These signs can be part of a word
+thai_signs: str = "\u0e2f\u0e3a\u0e46\u0e4c\u0e4d\u0e4e"  # 6 chars
 
-from ._api import SSLContext, extract_from_ssl, inject_into_ssl  # noqa: E402
+# Any Thai character that can be part of a word
+thai_letters: str = "".join(
+    [thai_consonants, thai_vowels, thai_tonemarks, thai_signs]
+)  # 74
 
-del _api, _sys  # type: ignore[name-defined] # noqa: F821
+# Fongman, Angkhankhu, Khomut:
+# These characters are section markers
+thai_punctuations: str = "\u0e4f\u0e5a\u0e5b"  # 3 chars
 
-__all__ = ["SSLContext", "inject_into_ssl", "extract_from_ssl"]
-__version__ = "0.10.0"
+thai_digits: str = "๐๑๒๓๔๕๖๗๘๙"  # 10
+thai_symbols: str = "\u0e3f"  # Thai Bath ฿
+
+# All Thai characters that are presented in Unicode
+thai_characters: str = "".join(
+    [thai_letters, thai_punctuations, thai_digits, thai_symbols]
+)
+# Thai pangram by Sungsit Sawaiwan
+# CC BY-SA License
+# Source: https://fontuni.com/articles/2015-07-12-thai-poetgram.html
+thai_pangram: str = """กีฬาบังลังก์ ฿๑,๒๓๔,๕๖๗,๘๙๐
+๏ จับฅอคนบั่นต้อง 	อาญา
+ขุดฆ่าโคตรฃัตติยา 	ซ่านม้วย
+ธรรมฤๅผ่อนรักษา 	ใจชั่ว โฉดแฮ
+สืบอยู่เต็มศึกด้วย 	ฝุ่นฟ้ากีฬา กามฦๅ ฯ
+๏ กตัญญูไป่พร้อม 	ปฐมฌาน
+เกมส๎วัฒน์ปฏิภาณ 	ห่อนล้ำ
+ทฤษฎีถ่อยๆ สังหาร 	เกณฑ์โทษ
+โกรธจี๊ดจ๋อยจ่มถ้ำ 	อยู่เฝ้า “อตฺตา” ๚ะ๛
+๑๒ กรกฎาคม ๒๕๕๘"""
+
+__all__: list[str] = [
+    "collate",
+    "correct",
+    "is_offline_mode",
+    "is_read_only_mode",
+    "is_unsafe_pickle_allowed",
+    "pos_tag",
+    "romanize",
+    "spell",
+    "sent_tokenize",
+    "subword_tokenize",
+    "soundex",
+    "thai_strftime",
+    "transliterate",
+    "Tokenizer",
+    "word_tokenize",
+]
+
+from pythainlp.soundex import soundex
+from pythainlp.spell import correct, spell
+from pythainlp.tag import pos_tag
+from pythainlp.tokenize import (
+    Tokenizer,
+    sent_tokenize,
+    subword_tokenize,
+    word_tokenize,
+)
+from pythainlp.tools.path import (
+    is_offline_mode,
+    is_read_only_mode,
+    is_unsafe_pickle_allowed,
+)
+from pythainlp.transliterate import romanize, transliterate
+from pythainlp.util import collate, thai_strftime
